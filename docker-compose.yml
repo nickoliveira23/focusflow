@@ -1,0 +1,47 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pomodoro-api
+    working_dir: /app
+    command: npm run dev:api
+    environment:
+      PORT: 3001
+      FRONTEND_URL: http://localhost:5173
+      COOKIE_SECRET: dev-cookie-secret
+      DB_PATH: /app/apps/api/data/pomodoro.sqlite
+      SPOTIFY_CLIENT_ID: ""
+      SPOTIFY_CLIENT_SECRET: ""
+      SPOTIFY_REDIRECT_URI: http://localhost:3001/api/auth/spotify/callback
+      SPOTIFY_MOCK: "true"
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      GOOGLE_REDIRECT_URI: http://localhost:3001/api/auth/google/callback
+      GOOGLE_MOCK: "true"
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - pomodoro_api_data:/app/apps/api/data
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pomodoro-web
+    working_dir: /app
+    command: npm --workspace @pomodoro/web run dev -- --host 0.0.0.0 --port 5173
+    environment:
+      VITE_API_BASE_URL: http://localhost:3001
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  pomodoro_api_data:

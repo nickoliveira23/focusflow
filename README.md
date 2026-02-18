@@ -45,6 +45,30 @@ npm run dev:web
 - Web: `http://localhost:5173`
 - API health: `http://localhost:3001/health`
 
+## Run with Docker Compose (Local)
+
+1. Build and start:
+
+```bash
+docker compose up --build
+```
+
+2. Access:
+
+- Web: `http://localhost:5173`
+- API health: `http://localhost:3001/health`
+
+3. Stop:
+
+```bash
+docker compose down
+```
+
+Notes:
+
+- API SQLite data is persisted in the named volume `pomodoro_api_data`.
+- Current compose setup is optimized for local development with hot reload.
+
 ## Scripts
 
 - `npm run dev:web`
