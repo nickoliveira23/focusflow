@@ -54,6 +54,12 @@ npm run dev:web
 - `npm run build`
 - `npm run quality` (typecheck + test + build)
 
+## CI
+
+- GitHub Actions workflow: `.github/workflows/ci.yml`
+- Runs on `push` and `pull_request` to `main`
+- Executes `npm ci` + `npm run quality`
+
 ## Product and Engineering Process
 
 This repository intentionally keeps BMAD artifacts as part of the portfolio to show end-to-end execution from planning to delivery.
@@ -73,4 +79,4 @@ This repository intentionally keeps BMAD artifacts as part of the portfolio to s
 
 ## License
 
-No `LICENSE` file yet. Add one before broader public distribution.
+MIT (`LICENSE`)
