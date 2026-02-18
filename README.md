@@ -1,23 +1,22 @@
-# Pomodoro Flow Monorepo
+# FocusFlow Monorepo
 
-Open-source pomodoro app with:
-- Web frontend (`React + Vite + TypeScript`)
-- API backend (`Fastify + TypeScript + SQLite`)
-- Local-first behavior, optional Google auth, optional Spotify integration
+Portfolio project for a modern Pomodoro experience with immersive focus mode, Google auth, local-first state, and sync-ready backend.
 
-## Monorepo Structure
+## Stack
 
-- `apps/web`: frontend SPA
-- `apps/api`: backend API
-- `packages/contracts`: shared types/contracts
-- `packages/ui`: shared UI package (placeholder)
-- `packages/config`: shared config package (placeholder)
-- `_bmad-output`: planning/spec artifacts
+- Web: `React + Vite + TypeScript`
+- API: `Fastify + TypeScript + SQLite`
+- Monorepo: `npm workspaces`
 
-## Requirements
+## Project Structure
 
-- Node.js 20+
-- npm 10+
+- `apps/web` frontend app
+- `apps/api` backend API
+- `packages/contracts` shared types/contracts
+- `packages/ui` shared UI package (placeholder)
+- `packages/config` shared config package (placeholder)
+- `_bmad` BMAD method assets (agent/workflow configs)
+- `_bmad-output` BMAD project artifacts (PRD, architecture, epics, sprint status)
 
 ## Getting Started
 
@@ -27,58 +26,51 @@ Open-source pomodoro app with:
 npm install
 ```
 
-2. Configure API env:
+2. Create env files:
 
 ```bash
 copy apps\\api\\.env.example apps\\api\\.env
+copy apps\\web\\.env.example apps\\web\\.env
 ```
 
-3. Start API and Web in separate terminals:
+3. Run API and Web in separate terminals:
 
 ```bash
 npm run dev:api
 npm run dev:web
 ```
 
-4. Open:
+4. Access:
+
 - Web: `http://localhost:5173`
 - API health: `http://localhost:3001/health`
 
-## Core Scripts
+## Scripts
 
-- `npm run dev:web`: start frontend dev server
-- `npm run dev:api`: start backend dev server
-- `npm run typecheck`: typecheck all workspaces
-- `npm run test`: run workspace tests (if present)
-- `npm run build`: build all workspaces
-- `npm run quality`: typecheck + test + build (quality gate)
+- `npm run dev:web`
+- `npm run dev:api`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+- `npm run quality` (typecheck + test + build)
 
-## Authentication and Integrations
+## Product and Engineering Process
 
-### Google Login
+This repository intentionally keeps BMAD artifacts as part of the portfolio to show end-to-end execution from planning to delivery.
 
-- Mock mode (default in `.env.example`): `GOOGLE_MOCK=true`
-- Real OAuth: set `GOOGLE_MOCK=false` and provide:
-  - `GOOGLE_CLIENT_ID`
-  - `GOOGLE_CLIENT_SECRET`
-  - Redirect URI: `http://localhost:3001/api/auth/google/callback`
+- PRD: `_bmad-output/planning-artifacts/prd.md`
+- Architecture: `_bmad-output/planning-artifacts/architecture.md`
+- Epics/Stories: `_bmad-output/planning-artifacts/epics.md`
+- UX Spec: `_bmad-output/planning-artifacts/ux-design-specification.md`
+- Sprint Status: `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- Portfolio notes: `docs/portfolio.md`
+- Roadmap: `docs/roadmap.md`
 
-### Spotify
+## App Docs
 
-- Mock mode: `SPOTIFY_MOCK=true`
-- Real mode: set `SPOTIFY_MOCK=false` and provide:
-  - `SPOTIFY_CLIENT_ID`
-  - `SPOTIFY_CLIENT_SECRET`
-  - Redirect URI: `http://localhost:3001/api/auth/spotify/callback`
-
-## Documentation
-
-- Product/spec docs: `_bmad-output/planning-artifacts`
-- Sprint tracking: `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- App-specific docs:
-  - `apps/web/README.md`
-  - `apps/api/README.md`
+- `apps/web/README.md`
+- `apps/api/README.md`
 
 ## License
 
-No license file is defined yet. Add `LICENSE` before public distribution.
+No `LICENSE` file yet. Add one before broader public distribution.
