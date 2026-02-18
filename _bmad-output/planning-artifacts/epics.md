@@ -12,6 +12,12 @@ author: Nicko
 
 This document provides the epic and story breakdown for pomodoro-app, decomposing PRD and Architecture into implementation-ready stories.
 
+## Implementation Sync Note (2026-02-18)
+
+- Epics 1-7 are implemented and marked `done` in sprint status.
+- Spotify stories are implemented as integration path, but real usage is currently gated by Premium/API constraints.
+- Presence/social capabilities remain post-MVP roadmap items.
+
 ## Requirements Inventory
 
 ### Functional Requirements
@@ -39,9 +45,9 @@ NFR7: SeguranÃ§a OAuth Spotify com PKCE e sem segredos no frontend.
 
 ### Additional Requirements
 
-- Arquitetura local-first com IndexedDB para sessÃµes e configuraÃ§Ãµes.
-- Backend Node/Fastify com PostgreSQL para sync/auth/Spotify.
-- Contratos de API versionados e validados.
+- Arquitetura local-first atual com `localStorage`; evoluÃ§Ã£o para IndexedDB permanece no roadmap.
+- Backend atual Node/Fastify com SQLite; evoluÃ§Ã£o para PostgreSQL permanece no roadmap.
+- Contratos de API com DTOs TypeScript; OpenAPI versionado permanece como evoluÃ§Ã£o.
 - SeparaÃ§Ã£o de domÃ­nio pronta para presenÃ§a compartilhada futura.
 - Telemetria de eventos de foco e integraÃ§Ã£o Spotify.
 

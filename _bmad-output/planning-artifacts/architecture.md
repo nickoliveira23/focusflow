@@ -15,18 +15,38 @@ pomodoro-app will be a web-first, local-first productivity platform with a stron
 The MVP architecture is split into:
 
 - Frontend SPA: React + TypeScript + Vite, installable as PWA.
-- Backend API: Node.js + Fastify + PostgreSQL for auth, sync, and future shared-presence.
-- Shared contracts: OpenAPI-driven API schemas and strict DTO validation.
+- Backend API: Node.js + Fastify + SQLite for auth and sync in MVP.
+- Shared contracts: TypeScript DTOs/contracts in monorepo packages.
 
 This gives fast MVP delivery while keeping a clean path for future social features without major refactors.
+
+### 1.1 Implementation Snapshot (2026-02-18)
+
+Current codebase is aligned to:
+
+- Web: React + Vite + TypeScript, componentized UI with hooks.
+- API: Fastify + TypeScript + `better-sqlite3`.
+- Local persistence: `localStorage` for settings, timer state, queue, and local events.
+- Auth: Google login with session cookies.
+- Spotify: integration path implemented, currently disabled in UI until Premium validation.
+- Quality gate: `npm run quality` (typecheck + tests + build), plus GitHub Actions CI.
+
+### 1.2 Post-MVP Target Direction (kept intentionally)
+
+The following remain valid as future direction, not current implementation details:
+
+- PostgreSQL migration for production-grade multi-user scale.
+- IndexedDB migration for richer offline datasets.
+- OpenAPI-first contract publishing.
+- Presence/social module behind feature flags.
 
 ## 2. Key Decisions
 
 ### Decision A: Frontend stack
 
 - Use React + TypeScript + Vite.
-- Use TanStack Query for server-state and Zustand for local UI/session state.
-- Use React Router for client routing.
+- Current: custom hooks and explicit fetch layer for server-state and local state.
+- Post-MVP option: evaluate TanStack Query/Zustand/React Router if complexity increases.
 
 Reasoning:
 - Fast iteration and low complexity for a low-complexity greenfield app.
@@ -44,8 +64,8 @@ Reasoning:
 
 ### Decision C: Data persistence model
 
-- Local-first storage with IndexedDB (Dexie) for sessions, settings, streak snapshots.
-- Server sync for authenticated users only (optional for MVP phase 1).
+- Current local-first storage with `localStorage` for sessions/settings/timer/sync queue.
+- Server sync for authenticated users only.
 - Conflict strategy: latest-write-wins for settings, append-only for focus sessions.
 
 Reasoning:
@@ -77,7 +97,7 @@ Reasoning:
 ### External integrations
 
 - Spotify Web API for current playback context.
-- Browser APIs: Notifications, Service Worker, IndexedDB, Visibility API.
+- Browser APIs: Notifications, Visibility API (Service Worker/IndexedDB planned).
 
 ### Core domains
 
@@ -109,7 +129,7 @@ Reasoning:
 
 ## 5. Data Model (MVP)
 
-### Local entities (IndexedDB)
+### Local entities (Current: localStorage)
 
 - `timer_settings`
 - `focus_sessions_local`
@@ -117,7 +137,7 @@ Reasoning:
 - `ui_preferences`
 - `sync_queue`
 
-### Server entities (PostgreSQL)
+### Server entities (Current: SQLite, Target: PostgreSQL)
 
 - `users`
 - `user_settings`
@@ -179,7 +199,8 @@ Reasoning:
 
 - Web: static deploy (Vercel/Netlify compatible) with PWA assets.
 - API: containerized Node service (Fly.io/Render/Railway compatible).
-- DB: managed PostgreSQL.
+- Current DB: SQLite file (`better-sqlite3`).
+- Post-MVP target DB: managed PostgreSQL.
 
 ## 9. Risks and Mitigations
 

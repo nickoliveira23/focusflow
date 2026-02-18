@@ -21,6 +21,13 @@ classification:
 **Author:** Nicko
 **Date:** 2026-02-05
 
+## Implementation Fidelity Note (Updated: 2026-02-18)
+
+- This PRD keeps both delivered MVP scope and future vision.
+- Delivered in current codebase: timer core, local-first persistence, insights, Google auth, per-user data scoping, automated tests, and CI quality gate.
+- Spotify remains in scope as strategic differentiator, with integration path implemented; real usage is currently constrained by Premium/API eligibility and is treated as rollout-gated.
+- Presence/community remains explicitly post-MVP.
+
 ## Success Criteria
 
 ### User Success
@@ -47,7 +54,7 @@ classification:
 **Objetivo de 3 Meses (MVP Completo):**
 - **Ferramenta completa para workflow principal**: Todas as funcionalidades essenciais implementadas e funcionais
   - Pomodoro funcional com personalizaÃ§Ã£o bÃ¡sica
-  - IntegraÃ§Ã£o Spotify operacional
+  - IntegraÃ§Ã£o Spotify pronta para rollout
   - Micro configuraÃ§Ãµes disponÃ­veis
   - Personalidade forte presente no design e microinteraÃ§Ãµes
 - **Base sÃ³lida estabelecida**: Arquitetura preparada para evoluir para presenÃ§a compartilhada futura sem refatoraÃ§Ã£o massiva
@@ -85,9 +92,9 @@ classification:
 - **Performance sob Carga**: App mantÃ©m performance mesmo com crescimento de usuÃ¡rios (preparaÃ§Ã£o para futuro)
 
 **IntegraÃ§Ã£o:**
-- **Spotify API**: IntegraÃ§Ã£o estÃ¡vel e confiÃ¡vel com Spotify Web API
-- **AutenticaÃ§Ã£o**: Fluxo de autenticaÃ§Ã£o Spotify funciona sem problemas
-- **AtualizaÃ§Ã£o de Dados**: MÃºsica atual sincroniza corretamente durante pomodoros
+- **Spotify API**: IntegraÃ§Ã£o preparada e validada em fluxo tÃ©cnico
+- **AutenticaÃ§Ã£o**: Fluxo de autenticaÃ§Ã£o Spotify implementado, com rollout condicionado
+- **AtualizaÃ§Ã£o de Dados**: Now Playing previsto para operar quando rollout for habilitado
 
 ### Measurable Outcomes
 
