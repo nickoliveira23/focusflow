@@ -1,0 +1,10 @@
+{
+  "name": "@pomodoro/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo config package has no build step",
+    "typecheck": "echo config package has no TypeScript sources"
+  }
+}

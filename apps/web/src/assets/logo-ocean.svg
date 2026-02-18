@@ -1,0 +1,12 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pf-ring-ocean" x1="12" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2F7797"/>
+      <stop offset="1" stop-color="#235A74"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="18" fill="#EAF7FF"/>
+  <circle cx="32" cy="34" r="16" fill="none" stroke="url(#pf-ring-ocean)" stroke-width="6"/>
+  <path d="M32 18C36.8 18 41 19.9 44.2 23.1L32 34V18Z" fill="#2F7797"/>
+  <circle cx="32" cy="34" r="3.2" fill="#235A74"/>
+</svg>

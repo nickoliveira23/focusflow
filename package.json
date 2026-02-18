@@ -1,0 +1,17 @@
+{
+  "name": "pomodoro-app",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @pomodoro/web run dev",
+    "dev:api": "npm --workspace @pomodoro/api run dev",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "quality": "npm run typecheck && npm run test && npm run build"
+  }
+}
