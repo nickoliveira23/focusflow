@@ -18,5 +18,6 @@ export const DEFAULT_SETTINGS: TimerSettings = {
 
 export const SPOTIFY_SCOPES = [
   "user-read-currently-playing",
-  "user-read-playback-state"
+  "user-read-playback-state",
+  "user-read-private"
 ].join(" ");

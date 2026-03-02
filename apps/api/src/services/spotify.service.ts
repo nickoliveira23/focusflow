@@ -144,18 +144,10 @@ export class SpotifyService {
       return { connected: false, playing: false };
     }
 
-    const fetchNowPlaying = async (token: string) =>
-      fetch("https://api.spotify.com/v1/me/player/currently-playing", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-    let spotifyResponse = await fetchNowPlaying(accessToken);
-    if (spotifyResponse.status === 401 && this.spotifyTokenState?.refreshToken) {
-      await this.refreshSpotifyAccessToken();
-      spotifyResponse = await fetchNowPlaying(this.spotifyTokenState.accessToken);
-    }
+    const spotifyResponse = await this.fetchSpotifyWithRefresh(
+      "https://api.spotify.com/v1/me/player/currently-playing",
+      accessToken
+    );
 
     if (spotifyResponse.status === 204) {
       return { connected: true, playing: false };
@@ -185,6 +177,48 @@ export class SpotifyService {
             artist: artistName || "Unknown artist"
           }
         : undefined
+    };
+  }
+
+  async getProfile() {
+    if (this.env.spotifyMock) {
+      if (!this.spotifyMockConnected) {
+        return { connected: false };
+      }
+      return {
+        connected: true,
+        profile: {
+          displayName: "Mock Listener"
+        }
+      };
+    }
+
+    const accessToken = await this.getValidAccessToken();
+    if (!accessToken) {
+      return { connected: false };
+    }
+
+    const spotifyResponse = await this.fetchSpotifyWithRefresh(
+      "https://api.spotify.com/v1/me",
+      accessToken
+    );
+
+    if (!spotifyResponse.ok) {
+      this.logger.error({ status: spotifyResponse.status }, "Spotify profile request failed");
+      return { connected: true };
+    }
+
+    const payload = (await spotifyResponse.json()) as {
+      display_name?: string;
+      images?: Array<{ url?: string }>;
+    };
+
+    return {
+      connected: true,
+      profile: {
+        displayName: payload.display_name || "Spotify User",
+        avatarUrl: payload.images?.[0]?.url
+      }
     };
   }
 
@@ -240,6 +274,22 @@ export class SpotifyService {
       await this.refreshSpotifyAccessToken();
     }
     return this.spotifyTokenState.accessToken;
+  }
+
+  private async fetchSpotifyWithRefresh(url: string, accessToken: string) {
+    const makeRequest = (token: string) =>
+      fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+    let spotifyResponse = await makeRequest(accessToken);
+    if (spotifyResponse.status === 401 && this.spotifyTokenState?.refreshToken) {
+      await this.refreshSpotifyAccessToken();
+      spotifyResponse = await makeRequest(this.spotifyTokenState.accessToken);
+    }
+    return spotifyResponse;
   }
 
   private ensureSpotifyConfig() {

@@ -1,8 +1,10 @@
-﻿import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { SessionMode, TimerSettings, TimerStatus } from "@/app/types";
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import type { NowPlayingResponse, SessionMode, TimerSettings, TimerStatus } from "@/app/types";
 import { getModeLabel } from "@/app/utils";
 
 interface TimerCardProps {
@@ -11,6 +13,10 @@ interface TimerCardProps {
   status: TimerStatus;
   timeLabel: string;
   completedFocusSessions: number;
+  spotifyEnabled: boolean;
+  spotifyConnected: boolean;
+  nowPlaying: NowPlayingResponse | null;
+  spotifyStatusMessage: string;
   ritualActive: boolean;
   ritualRemaining: number;
   autoCycle: boolean;
@@ -30,12 +36,24 @@ interface TimerCardProps {
   onAutoCycleChange: (checked: boolean) => void;
 }
 
+type FlipDigitState = {
+  tick: number;
+  previousChar: string;
+  isFlipping: boolean;
+};
+
+const FLIP_RESET_MS = 900;
+
 export function TimerCard({
   mode,
   settings,
   status,
   timeLabel,
   completedFocusSessions,
+  spotifyEnabled,
+  spotifyConnected,
+  nowPlaying,
+  spotifyStatusMessage,
   ritualActive,
   ritualRemaining,
   autoCycle,
@@ -54,6 +72,83 @@ export function TimerCard({
   onReset,
   onAutoCycleChange
 }: TimerCardProps) {
+  const immersiveFlipChars = timeLabel.split("");
+  const [flipState, setFlipState] = useState<Record<number, FlipDigitState>>({});
+  const previousCharsRef = useRef<string[]>(immersiveFlipChars);
+  const flipResetTimersRef = useRef<Record<number, number>>({});
+
+  useEffect(() => {
+    const previous = previousCharsRef.current;
+    const changedIndexes: number[] = [];
+
+    setFlipState((current) => {
+      let changed = false;
+      const nextState = { ...current };
+
+      immersiveFlipChars.forEach((char, index) => {
+        if (char === ":") {
+          return;
+        }
+        if (previous[index] !== char) {
+          changedIndexes.push(index);
+          nextState[index] = {
+            tick: (nextState[index]?.tick ?? 0) + 1,
+            previousChar: previous[index] ?? char,
+            isFlipping: true
+          };
+          changed = true;
+        }
+      });
+
+      return changed ? nextState : current;
+    });
+
+    previousCharsRef.current = immersiveFlipChars;
+
+    if (changedIndexes.length > 0) {
+      changedIndexes.forEach((index) => {
+        const existingTimer = flipResetTimersRef.current[index];
+        if (existingTimer) {
+          window.clearTimeout(existingTimer);
+        }
+
+        flipResetTimersRef.current[index] = window.setTimeout(() => {
+          setFlipState((current) => {
+            const currentState = current[index];
+            if (!currentState?.isFlipping) {
+              return current;
+            }
+            return {
+              ...current,
+              [index]: {
+                ...currentState,
+                isFlipping: false
+              }
+            };
+          });
+          delete flipResetTimersRef.current[index];
+        }, FLIP_RESET_MS);
+      });
+    }
+  }, [immersiveFlipChars]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(flipResetTimersRef.current).forEach((timerId) => {
+        window.clearTimeout(timerId);
+      });
+    };
+  }, []);
+
+  const spotifyFeedback =
+    spotifyConnected && nowPlaying?.playing && nowPlaying.track
+      ? `${nowPlaying.track.title} - ${nowPlaying.track.artist}`
+      : spotifyConnected
+        ? "Spotify connected"
+        : spotifyStatusMessage === "Spotify not connected."
+          ? "Spotify disconnected"
+          : spotifyStatusMessage;
+
   if (isImmersiveCanvas) {
     return (
       <Card
@@ -61,9 +156,54 @@ export function TimerCard({
         aria-label="Pomodoro immersive timer"
       >
         <CardContent className="immersive-canvas-content">
-          <p className="timer-value immersive-canvas-timer" aria-live="polite">
-            {timeLabel}
-          </p>
+          <div className="timer-value immersive-canvas-timer immersive-flip-display" aria-live="polite">
+            {immersiveFlipChars.map((char, index) =>
+              char === ":" ? (
+                <span key={`separator-${index}`} className="immersive-flip-separator" aria-hidden="true">
+                  :
+                </span>
+              ) : (
+                (() => {
+                  const flipMeta = flipState[index];
+                  const isFlipping = Boolean(flipMeta?.isFlipping && flipMeta.previousChar !== char);
+                  const flipStyle = {
+                    "--flip-delay": `${Math.max(0, immersiveFlipChars.length - index - 1) * 16}ms`
+                  } as CSSProperties;
+                  return (
+                    <span
+                      key={`digit-${index}`}
+                      className={`immersive-flip-digit ${isFlipping ? "is-flipping" : ""}`}
+                      style={flipStyle}
+                      aria-hidden="true"
+                    >
+                      <span className="immersive-flip-panel immersive-flip-panel-top">
+                        <span className="immersive-flip-panel-glyph">{char}</span>
+                      </span>
+                      <span className="immersive-flip-panel immersive-flip-panel-bottom">
+                        <span className="immersive-flip-panel-glyph">{char}</span>
+                      </span>
+                      {isFlipping ? (
+                        <>
+                          <span key={`flap-top-${index}-${flipMeta?.tick ?? 0}`} className="immersive-flip-flap immersive-flip-flap-top">
+                            <span className="immersive-flip-flap-glyph">{flipMeta?.previousChar}</span>
+                          </span>
+                          <span key={`flap-bottom-${index}-${flipMeta?.tick ?? 0}`} className="immersive-flip-flap immersive-flip-flap-bottom">
+                            <span className="immersive-flip-flap-glyph">{char}</span>
+                          </span>
+                        </>
+                      ) : null}
+                    </span>
+                  );
+                })()
+              )
+            )}
+          </div>
+          {spotifyEnabled ? (
+            <div className="immersive-canvas-spotify-hud" aria-live="polite">
+              <span className={`immersive-canvas-spotify-dot ${spotifyConnected ? "is-connected" : "is-offline"}`} aria-hidden="true" />
+              <p className="immersive-canvas-spotify-text">{spotifyFeedback}</p>
+            </div>
+          ) : null}
           <Button type="button" variant="outline" onClick={onExitImmersive}>
             Exit immersive
           </Button>
@@ -135,6 +275,12 @@ export function TimerCard({
         ) : null}
 
         <p className="hint">{hintMessage}</p>
+        {isImmersiveActive && spotifyEnabled ? (
+          <section className="immersive-spotify-hud" aria-live="polite">
+            <span className={`immersive-spotify-dot ${spotifyConnected ? "is-connected" : "is-offline"}`} aria-hidden="true" />
+            <p className="immersive-spotify-text">{spotifyFeedback}</p>
+          </section>
+        ) : null}
         {canEnterImmersive ? (
           <div className="immersive-actions">
             <Button type="button" variant="outline" onClick={onEnterImmersive}>

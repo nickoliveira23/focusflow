@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import type { AccountView, NowPlayingResponse } from "@/app/types";
 
 interface AccountModalProps {
@@ -40,6 +40,10 @@ export function AccountModal({
   return (
     <Dialog open={Boolean(accountView)} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="modal-card">
+        <DialogTitle className="sr-only">{accountViewTitle}</DialogTitle>
+        <DialogDescription className="sr-only">
+          Manage account, profile, sync information and premium integrations.
+        </DialogDescription>
         <div className="modal-header">
           <h2>{accountViewTitle}</h2>
         </div>
@@ -63,13 +67,26 @@ export function AccountModal({
             <section className="spotify-panel" aria-label="Spotify integration">
               <h2>Spotify</h2>
               <div className="spotify-actions">
-                <Button type="button" variant="outline" onClick={onSpotifyConnect} disabled={!spotifyEnabled || spotifyConnected}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onSpotifyConnect}
+                  disabled={!authUser || !spotifyEnabled || spotifyConnected}
+                >
                   Connect Spotify
                 </Button>
-                <Button type="button" variant="outline" onClick={onSpotifyDisconnect} disabled={!spotifyEnabled || !spotifyConnected}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onSpotifyDisconnect}
+                  disabled={!authUser || !spotifyEnabled || !spotifyConnected}
+                >
                   Disconnect
                 </Button>
               </div>
+              {!authUser ? (
+                <p className="spotify-status">Login with Google to enable Spotify integration.</p>
+              ) : null}
               {!spotifyEnabled ? (
                 <p className="spotify-status">Spotify temporarily disabled until Premium is available.</p>
               ) : null}

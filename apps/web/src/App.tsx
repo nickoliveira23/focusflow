@@ -19,6 +19,7 @@ import type {
   AccountView,
   FocusSessionRecord,
   NowPlayingResponse,
+  SpotifyProfileResponse,
   StatsSummaryResponse,
   TimerSettings
 } from "@/app/types";
@@ -38,6 +39,7 @@ export function App() {
   const [focusSessions, setFocusSessions] = useState<FocusSessionRecord[]>([]);
   const [spotifyConnected, setSpotifyConnected] = useState(false);
   const [nowPlaying, setNowPlaying] = useState<NowPlayingResponse | null>(null);
+  const [spotifyProfile, setSpotifyProfile] = useState<SpotifyProfileResponse["profile"] | null>(null);
   const [spotifyStatusMessage, setSpotifyStatusMessage] = useState("Spotify not connected.");
   const [serverWeekStats, setServerWeekStats] = useState<StatsSummaryResponse | null>(null);
   const [guestHydrated, setGuestHydrated] = useState(false);
@@ -164,9 +166,24 @@ export function App() {
   }, [authUser?.id]);
 
   useEffect(() => {
+    if (!authUser) {
+      setSpotifyConnected(false);
+      setNowPlaying(null);
+      setSpotifyProfile(null);
+      setSpotifyStatusMessage("Login with Google to use Spotify integration.");
+      return;
+    }
+
     const fetchSpotifyStatus = async () => {
       try {
         const response = await apiFetch("/api/spotify/status");
+        if (response.status === 401) {
+          setSpotifyConnected(false);
+          setNowPlaying(null);
+          setSpotifyProfile(null);
+          setSpotifyStatusMessage("Login with Google to use Spotify integration.");
+          return;
+        }
         const payload = (await response.json()) as { connected: boolean; mock?: boolean };
         setSpotifyConnected(payload.connected);
         if (payload.mock) {
@@ -185,7 +202,7 @@ export function App() {
       }
     };
     void fetchSpotifyStatus();
-  }, []);
+  }, [authUser?.id]);
 
   useEffect(() => {
     if (authUser) {
@@ -253,8 +270,11 @@ export function App() {
 
   useEffect(() => {
     if (!spotifyConnected) {
+      setSpotifyProfile(null);
       return;
     }
+
+    let intervalId: number | undefined;
 
     const fetchNowPlaying = async () => {
       try {
@@ -276,9 +296,45 @@ export function App() {
       }
     };
 
+    const pollMs = document.visibilityState === "visible" ? 5000 : 12000;
     void fetchNowPlaying();
-    const interval = window.setInterval(fetchNowPlaying, 15000);
-    return () => window.clearInterval(interval);
+    intervalId = window.setInterval(fetchNowPlaying, pollMs);
+
+    const handleVisibilityChange = () => {
+      if (intervalId) {
+        window.clearInterval(intervalId);
+      }
+      const nextPollMs = document.visibilityState === "visible" ? 5000 : 12000;
+      intervalId = window.setInterval(fetchNowPlaying, nextPollMs);
+      void fetchNowPlaying();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      if (intervalId) {
+        window.clearInterval(intervalId);
+      }
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [spotifyConnected]);
+
+  useEffect(() => {
+    if (!spotifyConnected) {
+      return;
+    }
+
+    const fetchSpotifyProfile = async () => {
+      try {
+        const response = await apiFetch("/api/spotify/profile");
+        const payload = (await response.json()) as SpotifyProfileResponse;
+        setSpotifyProfile(payload.profile ?? null);
+      } catch {
+        setSpotifyProfile(null);
+      }
+    };
+
+    void fetchSpotifyProfile();
   }, [spotifyConnected]);
 
   const handleApplySettings = () => {
@@ -317,6 +373,10 @@ export function App() {
   }, [settingsFeedbackMessage]);
 
   const handleSpotifyConnect = async () => {
+    if (!authUser) {
+      setSpotifyStatusMessage("Login with Google to connect Spotify.");
+      return;
+    }
     if (!SPOTIFY_ENABLED) {
       setSpotifyStatusMessage("Spotify integration is temporarily disabled (Premium required).");
       return;
@@ -335,6 +395,10 @@ export function App() {
   };
 
   const handleSpotifyDisconnect = async () => {
+    if (!authUser) {
+      setSpotifyStatusMessage("Login with Google to manage Spotify connection.");
+      return;
+    }
     if (!SPOTIFY_ENABLED) {
       setSpotifyStatusMessage("Spotify integration is temporarily disabled (Premium required).");
       return;
@@ -343,6 +407,7 @@ export function App() {
       await apiFetch("/api/auth/spotify/disconnect", { method: "POST" });
       setSpotifyConnected(false);
       setNowPlaying(null);
+      setSpotifyProfile(null);
       setSpotifyStatusMessage("Spotify disconnected.");
     } catch {
       setSpotifyStatusMessage("Could not disconnect Spotify.");
@@ -365,6 +430,14 @@ export function App() {
   const handleLogout = async () => {
     const previousUserId = authUser?.id;
     try {
+      if (authUser) {
+        try {
+          await apiFetch("/api/auth/spotify/disconnect", { method: "POST" });
+        } catch {
+          // Ignore spotify disconnect failures during logout.
+        }
+      }
+
       if (previousUserId) {
         window.localStorage.removeItem(getTimerStorageKey(previousUserId));
       }
@@ -374,6 +447,10 @@ export function App() {
       handleReset();
       setIsImmersiveLocked(true);
       setAuthUser(null);
+      setSpotifyConnected(false);
+      setNowPlaying(null);
+      setSpotifyProfile(null);
+      setSpotifyStatusMessage("Login with Google to use Spotify integration.");
       setServerWeekStats(null);
       await apiFetch("/api/auth/logout", { method: "POST" });
     } catch {
@@ -442,6 +519,10 @@ export function App() {
           status={status}
           timeLabel={timeLabel}
           completedFocusSessions={completedFocusSessions}
+          spotifyEnabled={SPOTIFY_ENABLED && Boolean(authUser)}
+          spotifyConnected={spotifyConnected}
+          nowPlaying={nowPlaying}
+          spotifyStatusMessage={spotifyStatusMessage}
           ritualActive={ritualActive}
           ritualRemaining={ritualRemaining}
           autoCycle={autoCycle}
@@ -460,6 +541,37 @@ export function App() {
           onReset={handleReset}
           onAutoCycleChange={setAutoCycle}
         />
+        {SPOTIFY_ENABLED && !isImmersiveActive && Boolean(authUser) ? (
+          <footer className={`spotify-footer-card ${spotifyConnected ? "is-connected" : "is-offline"}`} aria-live="polite">
+            <div className="spotify-footer-left">
+              <div className="spotify-footer-brand">
+                <span className="spotify-footer-dot" aria-hidden="true" />
+                <span>Spotify</span>
+              </div>
+              {spotifyConnected ? (
+                nowPlaying?.playing && nowPlaying.track ? (
+                  <p className="spotify-footer-track">
+                    {nowPlaying.track.title} - {nowPlaying.track.artist}
+                  </p>
+                ) : (
+                  <p className="spotify-footer-status">Connected. Nothing is playing right now.</p>
+                )
+              ) : (
+                <p className="spotify-footer-status">Disconnected. Connect in Account &gt; Pomodoro Premium.</p>
+              )}
+            </div>
+            <div className="spotify-footer-profile">
+              {spotifyConnected && spotifyProfile?.avatarUrl ? (
+                <img
+                  src={spotifyProfile.avatarUrl}
+                  alt={spotifyProfile.displayName || "Spotify profile"}
+                  className="spotify-footer-avatar"
+                  referrerPolicy="no-referrer"
+                />
+              ) : null}
+            </div>
+          </footer>
+        ) : null}
       </div>
 
       <SettingsModal

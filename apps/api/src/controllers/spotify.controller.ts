@@ -23,4 +23,8 @@ export class SpotifyController {
   getNowPlaying() {
     return this.spotifyService.getNowPlaying();
   }
+
+  getProfile() {
+    return this.spotifyService.getProfile();
+  }
 }
