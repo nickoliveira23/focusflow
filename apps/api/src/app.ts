@@ -37,13 +37,13 @@ export async function buildApp() {
 
   const healthController = new HealthController();
   const dataController = new DataController(authService, dataService);
-  const authController = new AuthController(authService);
+  const authController = new AuthController(authService, spotifyService);
   const spotifyController = new SpotifyController(spotifyService);
 
   await registerHealthRoutes(app, healthController);
   await registerDataRoutes(app, dataController);
   await registerAuthRoutes(app, authController);
-  await registerSpotifyRoutes(app, spotifyController);
+  await registerSpotifyRoutes(app, spotifyController, authService);
 
   return { app, env };
 }

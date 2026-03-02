@@ -14,7 +14,7 @@ export const DEFAULT_SETTINGS: TimerSettings = {
   immersiveFocusOnlyTimer: false
 };
 
-export const SPOTIFY_ENABLED = false;
+export const SPOTIFY_ENABLED = import.meta.env.VITE_SPOTIFY_ENABLED !== "false";
 export const TIMER_STORAGE_KEY = "pomodoro.timer.v1";
 export const SETTINGS_STORAGE_KEY = "pomodoro.settings.v1";
 export const FOCUS_SESSIONS_STORAGE_KEY = "pomodoro.sessions.v1";

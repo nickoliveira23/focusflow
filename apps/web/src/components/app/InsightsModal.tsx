@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 interface InsightsModalProps {
   isOpen: boolean;
@@ -19,6 +19,10 @@ export function InsightsModal({ isOpen, onClose, stats, serverWeekStats }: Insig
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="modal-card">
+        <DialogTitle className="sr-only">Insights</DialogTitle>
+        <DialogDescription className="sr-only">
+          View focus session totals and minutes for today and the last seven days.
+        </DialogDescription>
         <div className="modal-header">
           <h2>Insights</h2>
         </div>

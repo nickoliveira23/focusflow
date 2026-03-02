@@ -25,6 +25,7 @@ copy .env.example .env
 
 Variables:
 - `VITE_API_BASE_URL`: backend base URL (example: `http://localhost:3001`)
+- `VITE_SPOTIFY_ENABLED`: toggle Spotify UI/features (`true` by default, set `false` to hide)
 
 ## Run
 

@@ -32,6 +32,14 @@ export interface NowPlayingResponse {
   };
 }
 
+export interface SpotifyProfileResponse {
+  connected: boolean;
+  profile?: {
+    displayName: string;
+    avatarUrl?: string;
+  };
+}
+
 export type SyncQueueItem =
   | { id: string; type: "settings"; payload: TimerSettings }
   | { id: string; type: "session"; payload: FocusSessionRecord };

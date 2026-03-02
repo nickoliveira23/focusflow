@@ -70,6 +70,9 @@ npm run dev
 - `GET /api/auth/spotify/callback`
 - `POST /api/auth/spotify/disconnect`
 - `GET /api/spotify/now-playing`
+- `GET /api/spotify/profile`
+
+Note: Spotify endpoints (except callback) require an authenticated Google session.
 
 ## Testing
 
