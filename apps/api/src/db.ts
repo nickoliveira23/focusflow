@@ -1,6 +1,4 @@
-﻿import Database from "better-sqlite3";
-import fs from "node:fs";
-import path from "node:path";
+import pg from "pg";
 import type { AuthUser, FocusSessionRecord, TimerSettings } from "./models/domain.js";
 import { createSettingsRepository } from "./repositories/settings.repository.js";
 import { createSessionsRepository } from "./repositories/sessions.repository.js";
@@ -8,12 +6,10 @@ import { createUsersRepository } from "./repositories/users.repository.js";
 
 export type { AuthUser, FocusSessionRecord, TimerSettings };
 
-export function createDb(dbPath: string) {
-  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-  const db = new Database(dbPath);
-  db.pragma("journal_mode = WAL");
+export async function createDb(databaseUrl: string) {
+  const pool = new pg.Pool({ connectionString: databaseUrl });
 
-  db.exec(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS settings (
       user_id TEXT PRIMARY KEY,
       settings_json TEXT NOT NULL,
@@ -47,13 +43,16 @@ export function createDb(dbPath: string) {
     );
   `);
 
-  const settingsRepository = createSettingsRepository(db);
-  const sessionsRepository = createSessionsRepository(db);
-  const usersRepository = createUsersRepository(db);
+  const settingsRepository = createSettingsRepository(pool);
+  const sessionsRepository = createSessionsRepository(pool);
+  const usersRepository = createUsersRepository(pool);
 
   return {
     ...settingsRepository,
     ...sessionsRepository,
-    ...usersRepository
+    ...usersRepository,
+    async close() {
+      await pool.end();
+    }
   };
 }

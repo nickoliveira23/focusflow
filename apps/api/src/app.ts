@@ -29,7 +29,7 @@ export async function buildApp() {
     hook: "onRequest"
   });
 
-  const db = createDb(env.dbPath);
+  const db = await createDb(env.databaseUrl);
 
   const authService = new AuthService(db, env, app.log);
   const dataService = new DataService(db);
