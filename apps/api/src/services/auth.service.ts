@@ -149,10 +149,11 @@ export class AuthService {
 
   private async setSessionCookie(reply: FastifyReply, userId: string) {
     const session = await this.db.createUserSession(userId, this.env.sessionTtlDays);
+    const isProduction = this.env.frontendUrl.startsWith("https://");
     reply.setCookie(this.env.sessionCookieName, session.id, {
       httpOnly: true,
-      sameSite: "lax",
-      secure: false,
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
       path: "/",
       maxAge: this.env.sessionTtlDays * 24 * 60 * 60
     });
