@@ -6,7 +6,7 @@ import type { ReturnTypeCreateDb } from "../models/db-types.js";
 import { DEFAULT_USER_ID } from "../config/constants.js";
 
 export class AuthService {
-  private googleOauthState = "";
+  private googleOauthStates = new Set<string>();
   private readonly googleJwks = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
 
   constructor(
@@ -50,7 +50,7 @@ export class AuthService {
     }
     this.ensureGoogleConfig();
     const state = randomBytes(16).toString("hex");
-    this.googleOauthState = state;
+    this.googleOauthStates.add(state);
 
     const params = new URLSearchParams({
       client_id: this.env.googleClientId,
@@ -86,7 +86,7 @@ export class AuthService {
       return reply.redirect(`${this.env.frontendUrl}/?auth=error&provider=google`);
     }
 
-    if (!query.code || !query.state || query.state !== this.googleOauthState) {
+    if (!query.code || !query.state || !this.googleOauthStates.has(query.state)) {
       return reply.redirect(`${this.env.frontendUrl}/?auth=invalid_state&provider=google`);
     }
 
@@ -134,7 +134,7 @@ export class AuthService {
     });
 
     await this.setSessionCookie(reply, user.id);
-    this.googleOauthState = "";
+    this.googleOauthStates.delete(query.state);
     return reply.redirect(`${this.env.frontendUrl}/?auth=connected&provider=google`);
   }
 
