@@ -1,4 +1,4 @@
-﻿import { DEFAULT_SETTINGS } from "../config/constants.js";
+import { DEFAULT_SETTINGS } from "../config/constants.js";
 import type { FocusSessionRecord, TimerSettings } from "../db.js";
 import type { ReturnTypeCreateDb } from "../models/db-types.js";
 

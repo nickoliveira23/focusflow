@@ -1,16 +1,13 @@
-import path from "node:path";
-import os from "node:os";
-import { mkdtemp } from "node:fs/promises";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
 
 describe("data integration", () => {
-  let tmpDir = "";
   let app: Awaited<ReturnType<typeof buildApp>>["app"] | null = null;
 
   beforeEach(async () => {
-    tmpDir = await mkdtemp(path.join(os.tmpdir(), "pomodoro-api-data-"));
-    process.env.DB_PATH = path.join(tmpDir, "pomodoro.sqlite");
+    if (!process.env.DATABASE_URL) {
+      return;
+    }
     process.env.GOOGLE_MOCK = "true";
     process.env.SPOTIFY_MOCK = "true";
     process.env.FRONTEND_URL = "http://localhost:5173";
@@ -28,6 +25,9 @@ describe("data integration", () => {
   });
 
   it("scopes settings by authenticated user", async () => {
+    if (!process.env.DATABASE_URL) {
+      return;
+    }
     expect(app).not.toBeNull();
     if (!app) {
       return;

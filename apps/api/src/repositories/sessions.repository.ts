@@ -1,55 +1,52 @@
-﻿import type Database from "better-sqlite3";
+import type pg from "pg";
 import type { FocusSessionRecord } from "../models/domain.js";
 
 interface StatsRow {
-  sessions: number;
-  total_seconds: number;
+  sessions: string;
+  total_seconds: string;
 }
 
-export function createSessionsRepository(db: Database.Database) {
-  const insertFocusSessionStmt = db.prepare(`
-    INSERT OR IGNORE INTO focus_sessions (
-      user_id, id, completed_at_iso, duration_seconds, status
-    ) VALUES (
-      @user_id, @id, @completed_at_iso, @duration_seconds, @status
-    )
-  `);
-
-  const countSessionStmt = db.prepare(
-    `SELECT COUNT(*) AS count FROM focus_sessions WHERE user_id = ?`
-  );
-
-  const statsSummaryStmt = db.prepare(`
-    SELECT COUNT(*) AS sessions, COALESCE(SUM(duration_seconds), 0) AS total_seconds
-    FROM focus_sessions
-    WHERE user_id = ? AND completed_at_iso >= ?
-  `);
-
-  const insertSessionsTxn = db.transaction((userId: string, sessions: FocusSessionRecord[]) => {
-    let accepted = 0;
-    for (const session of sessions) {
-      const result = insertFocusSessionStmt.run({
-        user_id: userId,
-        id: session.id,
-        completed_at_iso: session.completedAtIso,
-        duration_seconds: Math.max(0, Number(session.durationSeconds ?? 0)),
-        status: "completed"
-      });
-      if (result.changes > 0) {
-        accepted += 1;
-      }
-    }
-    return accepted;
-  });
-
+export function createSessionsRepository(pool: pg.Pool) {
   return {
-    insertFocusSessionsBulk(userId: string, sessions: FocusSessionRecord[]) {
-      const accepted = insertSessionsTxn(userId, sessions);
-      const total = (countSessionStmt.get(userId) as { count: number }).count;
-      return { accepted, total };
+    async insertFocusSessionsBulk(userId: string, sessions: FocusSessionRecord[]) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        let accepted = 0;
+        for (const session of sessions) {
+          const result = await client.query(
+            `INSERT INTO focus_sessions (user_id, id, completed_at_iso, duration_seconds, status)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT DO NOTHING`,
+            [
+              userId,
+              session.id,
+              session.completedAtIso,
+              Math.max(0, Number(session.durationSeconds ?? 0)),
+              "completed"
+            ]
+          );
+          if (result.rowCount && result.rowCount > 0) {
+            accepted += 1;
+          }
+        }
+        await client.query("COMMIT");
+
+        const countResult = await pool.query(
+          `SELECT COUNT(*) AS count FROM focus_sessions WHERE user_id = $1`,
+          [userId]
+        );
+        const total = Number(countResult.rows[0].count);
+        return { accepted, total };
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
     },
 
-    getStatsSummary(userId: string, range: "day" | "week" | "month") {
+    async getStatsSummary(userId: string, range: "day" | "week" | "month") {
       const now = Date.now();
       const windowMs =
         range === "month"
@@ -58,11 +55,18 @@ export function createSessionsRepository(db: Database.Database) {
             ? 7 * 24 * 60 * 60 * 1000
             : 24 * 60 * 60 * 1000;
       const sinceIso = new Date(now - windowMs).toISOString();
-      const row = statsSummaryStmt.get(userId, sinceIso) as StatsRow;
+
+      const result = await pool.query<StatsRow>(
+        `SELECT COUNT(*) AS sessions, COALESCE(SUM(duration_seconds), 0) AS total_seconds
+         FROM focus_sessions
+         WHERE user_id = $1 AND completed_at_iso >= $2`,
+        [userId, sinceIso]
+      );
+      const row = result.rows[0];
       return {
         range,
-        sessions: row.sessions,
-        focusedMinutes: Math.floor((row.total_seconds ?? 0) / 60)
+        sessions: Number(row.sessions),
+        focusedMinutes: Math.floor(Number(row.total_seconds ?? 0) / 60)
       };
     }
   };

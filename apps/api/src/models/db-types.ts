@@ -1,3 +1,3 @@
-﻿import type { createDb } from "../db.js";
+import type { createDb } from "../db.js";
 
-export type ReturnTypeCreateDb = ReturnType<typeof createDb>;
+export type ReturnTypeCreateDb = Awaited<ReturnType<typeof createDb>>;

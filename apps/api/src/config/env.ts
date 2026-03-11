@@ -1,10 +1,8 @@
-﻿import path from "node:path";
-
 export interface AppEnv {
   port: number;
   frontendUrl: string;
   cookieSecret: string;
-  dbPath: string;
+  databaseUrl: string;
   sessionCookieName: string;
   sessionTtlDays: number;
   spotifyClientId: string;
@@ -22,7 +20,7 @@ export function getEnv(): AppEnv {
     port: Number(process.env.PORT ?? 3001),
     frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:5173",
     cookieSecret: process.env.COOKIE_SECRET ?? "dev-cookie-secret",
-    dbPath: process.env.DB_PATH ?? path.resolve(process.cwd(), "data", "pomodoro.sqlite"),
+    databaseUrl: process.env.DATABASE_URL ?? "postgresql://localhost:5432/pomodoro",
     sessionCookieName: "pomodoro_session",
     sessionTtlDays: 30,
     spotifyClientId: process.env.SPOTIFY_CLIENT_ID ?? "",

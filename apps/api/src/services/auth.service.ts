@@ -1,4 +1,4 @@
-﻿import { randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import type { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { AppEnv } from "../config/env.js";
@@ -15,7 +15,7 @@ export class AuthService {
     private readonly logger: FastifyBaseLogger
   ) {}
 
-  getAuthUserFromRequest(request: FastifyRequest) {
+  async getAuthUserFromRequest(request: FastifyRequest) {
     const sessionId = request.cookies[this.env.sessionCookieName];
     if (!sessionId) {
       return null;
@@ -23,13 +23,13 @@ export class AuthService {
     return this.db.getUserBySession(sessionId);
   }
 
-  resolveUserId(request: FastifyRequest): string {
-    const user = this.getAuthUserFromRequest(request);
+  async resolveUserId(request: FastifyRequest): Promise<string> {
+    const user = await this.getAuthUserFromRequest(request);
     return user?.id ?? DEFAULT_USER_ID;
   }
 
-  getMe(request: FastifyRequest) {
-    const user = this.getAuthUserFromRequest(request);
+  async getMe(request: FastifyRequest) {
+    const user = await this.getAuthUserFromRequest(request);
     if (!user) {
       return { authenticated: false };
     }
@@ -69,13 +69,13 @@ export class AuthService {
 
   async handleGoogleCallback(request: FastifyRequest, reply: FastifyReply) {
     if (this.env.googleMock) {
-      const mockUser = this.db.upsertGoogleUser({
+      const mockUser = await this.db.upsertGoogleUser({
         googleSub: "mock-google-sub",
         email: "mock-user@example.com",
         name: "Mock User",
         avatarUrl: "https://placehold.co/80x80"
       });
-      this.setSessionCookie(reply, mockUser.id);
+      await this.setSessionCookie(reply, mockUser.id);
       return reply.redirect(`${this.env.frontendUrl}/?auth=connected&provider=google&mock=1`);
     }
 
@@ -126,29 +126,29 @@ export class AuthService {
       picture?: string;
     };
 
-    const user = this.db.upsertGoogleUser({
+    const user = await this.db.upsertGoogleUser({
       googleSub: claims.sub,
       email: claims.email ?? "",
       name: claims.name ?? "Google User",
       avatarUrl: claims.picture ?? ""
     });
 
-    this.setSessionCookie(reply, user.id);
+    await this.setSessionCookie(reply, user.id);
     this.googleOauthState = "";
     return reply.redirect(`${this.env.frontendUrl}/?auth=connected&provider=google`);
   }
 
-  logout(request: FastifyRequest, reply: FastifyReply) {
+  async logout(request: FastifyRequest, reply: FastifyReply) {
     const sessionId = request.cookies[this.env.sessionCookieName];
     if (sessionId) {
-      this.db.deleteSession(sessionId);
+      await this.db.deleteSession(sessionId);
     }
     reply.clearCookie(this.env.sessionCookieName, { path: "/" });
     return { success: true };
   }
 
-  private setSessionCookie(reply: FastifyReply, userId: string) {
-    const session = this.db.createUserSession(userId, this.env.sessionTtlDays);
+  private async setSessionCookie(reply: FastifyReply, userId: string) {
+    const session = await this.db.createUserSession(userId, this.env.sessionTtlDays);
     reply.setCookie(this.env.sessionCookieName, session.id, {
       httpOnly: true,
       sameSite: "lax",

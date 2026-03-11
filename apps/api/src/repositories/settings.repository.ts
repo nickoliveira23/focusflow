@@ -1,32 +1,27 @@
-﻿import type Database from "better-sqlite3";
+import type pg from "pg";
 import type { TimerSettings } from "../models/domain.js";
 
 interface SettingsRow {
   settings_json: string;
 }
 
-export function createSettingsRepository(db: Database.Database) {
-  const selectSettingsStmt = db.prepare(
-    `SELECT settings_json FROM settings WHERE user_id = ?`
-  );
-
-  const upsertSettingsStmt = db.prepare(`
-    INSERT INTO settings (user_id, settings_json, updated_at)
-    VALUES (@user_id, @settings_json, @updated_at)
-    ON CONFLICT(user_id) DO UPDATE SET
-      settings_json = excluded.settings_json,
-      updated_at = excluded.updated_at
-  `);
-
+export function createSettingsRepository(pool: pg.Pool) {
   return {
-    getSettings(userId: string, fallback: TimerSettings): TimerSettings {
-      const row = selectSettingsStmt.get(userId) as SettingsRow | undefined;
+    async getSettings(userId: string, fallback: TimerSettings): Promise<TimerSettings> {
+      const result = await pool.query<SettingsRow>(
+        `SELECT settings_json FROM settings WHERE user_id = $1`,
+        [userId]
+      );
+      const row = result.rows[0];
       if (!row) {
-        upsertSettingsStmt.run({
-          user_id: userId,
-          settings_json: JSON.stringify(fallback),
-          updated_at: new Date().toISOString()
-        });
+        await pool.query(
+          `INSERT INTO settings (user_id, settings_json, updated_at)
+           VALUES ($1, $2, $3)
+           ON CONFLICT(user_id) DO UPDATE SET
+             settings_json = EXCLUDED.settings_json,
+             updated_at = EXCLUDED.updated_at`,
+          [userId, JSON.stringify(fallback), new Date().toISOString()]
+        );
         return fallback;
       }
       try {
@@ -36,12 +31,15 @@ export function createSettingsRepository(db: Database.Database) {
       }
     },
 
-    upsertSettings(userId: string, settings: TimerSettings) {
-      upsertSettingsStmt.run({
-        user_id: userId,
-        settings_json: JSON.stringify(settings),
-        updated_at: new Date().toISOString()
-      });
+    async upsertSettings(userId: string, settings: TimerSettings): Promise<TimerSettings> {
+      await pool.query(
+        `INSERT INTO settings (user_id, settings_json, updated_at)
+         VALUES ($1, $2, $3)
+         ON CONFLICT(user_id) DO UPDATE SET
+           settings_json = EXCLUDED.settings_json,
+           updated_at = EXCLUDED.updated_at`,
+        [userId, JSON.stringify(settings), new Date().toISOString()]
+      );
       return settings;
     }
   };
