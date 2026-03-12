@@ -198,16 +198,16 @@ export function TimerCard({
               )
             )}
           </div>
-          {spotifyEnabled ? (
-            <div className="immersive-canvas-spotify-hud" aria-live="polite">
-              <span className={`immersive-canvas-spotify-dot ${spotifyConnected ? "is-connected" : "is-offline"}`} aria-hidden="true" />
-              <p className="immersive-canvas-spotify-text">{spotifyFeedback}</p>
-            </div>
-          ) : null}
           <Button type="button" variant="outline" onClick={onExitImmersive}>
             Exit immersive
           </Button>
         </CardContent>
+        {spotifyEnabled ? (
+          <div className="immersive-canvas-spotify-hud" aria-live="polite">
+            <span className={`immersive-canvas-spotify-dot ${spotifyConnected ? "is-connected" : "is-offline"}`} aria-hidden="true" />
+            <p className="immersive-canvas-spotify-text">{spotifyFeedback}</p>
+          </div>
+        ) : null}
       </Card>
     );
   }

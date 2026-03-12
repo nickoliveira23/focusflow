@@ -1013,13 +1013,16 @@ body {
 }
 
 .immersive-canvas-spotify-hud {
+  position: absolute;
+  bottom: clamp(16px, 3vh, 32px);
+  left: clamp(16px, 3vw, 32px);
   display: flex;
   align-items: center;
   gap: clamp(8px, 1.2vw, 12px);
-  max-width: min(88vw, 980px);
-  border: 1px solid rgba(255, 255, 255, 0.26);
+  max-width: min(50vw, 420px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 999px;
-  background: rgba(10, 10, 10, 0.58);
+  background: rgba(10, 10, 10, 0.7);
   padding: clamp(8px, 1vw, 10px) clamp(12px, 1.8vw, 18px);
 }
 
