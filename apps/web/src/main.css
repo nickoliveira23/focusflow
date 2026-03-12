@@ -1364,7 +1364,48 @@ body {
   }
 }
 
+.darkness-slider {
+  width: 100%;
+  cursor: pointer;
+  accent-color: #f59e0b;
+  height: 6px;
+  margin-top: 6px;
+}
+
 @media (max-width: 600px) {
+  .immersive-canvas-content {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .immersive-flip-digit {
+    width: clamp(48px, 20vw, 80px);
+    height: clamp(66px, 28vw, 110px);
+    border-radius: 8px;
+  }
+
+  .immersive-flip-display {
+    gap: 6px;
+  }
+
+  .immersive-canvas-timer {
+    font-size: clamp(2.4rem, 14vw, 4.8rem);
+  }
+
+  .immersive-flip-separator {
+    font-size: clamp(2rem, 12vw, 4rem);
+  }
+
+  .immersive-canvas-spotify-footer {
+    bottom: 12px;
+    left: 12px;
+    max-width: calc(100vw - 24px);
+  }
+
+  .immersive-canvas-card [data-slot="button"] {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
   .app-shell {
     padding: 12px;
   }

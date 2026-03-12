@@ -172,12 +172,14 @@ export function SettingsModal({
             Full-canvas timer only
           </label>
           <label>
-            Focus darkness (%)
-            <Input
-              type="number"
+            Focus darkness ({settings.immersiveFocusDarkness}%)
+            <input
+              type="range"
               min={20}
               max={90}
+              step={1}
               value={settings.immersiveFocusDarkness}
+              className="darkness-slider"
               onChange={(event) =>
                 onSettingsChange({
                   ...settings,
