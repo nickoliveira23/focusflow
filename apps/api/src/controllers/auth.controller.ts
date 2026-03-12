@@ -24,4 +24,8 @@ export class AuthController {
     this.spotifyService.disconnect();
     return this.authService.logout(request, reply);
   }
+
+  async deleteAccount(request: FastifyRequest, reply: FastifyReply) {
+    return this.authService.deleteAccount(request, reply);
+  }
 }

@@ -147,6 +147,16 @@ export class AuthService {
     return { success: true };
   }
 
+  async deleteAccount(request: FastifyRequest, reply: FastifyReply) {
+    const user = await this.getAuthUserFromRequest(request);
+    if (!user) {
+      return reply.code(401).send({ error: "AUTH_REQUIRED" });
+    }
+    await this.db.deleteUserData(user.id);
+    reply.clearCookie(this.env.sessionCookieName, { path: "/" });
+    return { success: true };
+  }
+
   private async setSessionCookie(reply: FastifyReply, userId: string) {
     const session = await this.db.createUserSession(userId, this.env.sessionTtlDays);
     const isProduction = this.env.frontendUrl.startsWith("https://");

@@ -88,6 +88,13 @@ export function createUsersRepository(pool: pg.Pool) {
 
     async deleteSession(sessionId: string) {
       await pool.query(`DELETE FROM user_sessions WHERE id = $1`, [sessionId]);
+    },
+
+    async deleteUserData(userId: string) {
+      await pool.query(`DELETE FROM user_sessions WHERE user_id = $1`, [userId]);
+      await pool.query(`DELETE FROM focus_sessions WHERE user_id = $1`, [userId]);
+      await pool.query(`DELETE FROM settings WHERE user_id = $1`, [userId]);
+      await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
     }
   };
 }
