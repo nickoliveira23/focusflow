@@ -40,6 +40,7 @@ export function SettingsModal({
             <Input
               type="number"
               min={1}
+              max={120}
               value={settings.focusMinutes}
               onChange={(event) =>
                 onSettingsChange({
@@ -54,6 +55,7 @@ export function SettingsModal({
             <Input
               type="number"
               min={1}
+              max={60}
               value={settings.shortBreakMinutes}
               onChange={(event) =>
                 onSettingsChange({
@@ -68,6 +70,7 @@ export function SettingsModal({
             <Input
               type="number"
               min={1}
+              max={60}
               value={settings.longBreakMinutes}
               onChange={(event) =>
                 onSettingsChange({
@@ -82,6 +85,7 @@ export function SettingsModal({
             <Input
               type="number"
               min={1}
+              max={12}
               value={settings.longBreakEvery}
               onChange={(event) =>
                 onSettingsChange({

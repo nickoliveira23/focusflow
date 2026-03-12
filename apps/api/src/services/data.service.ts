@@ -11,10 +11,10 @@ export class DataService {
 
   updateSettings(userId: string, payload: Partial<TimerSettings>) {
     const next: TimerSettings = {
-      focusMinutes: Math.max(1, Number(payload.focusMinutes ?? DEFAULT_SETTINGS.focusMinutes)),
-      shortBreakMinutes: Math.max(1, Number(payload.shortBreakMinutes ?? DEFAULT_SETTINGS.shortBreakMinutes)),
-      longBreakMinutes: Math.max(1, Number(payload.longBreakMinutes ?? DEFAULT_SETTINGS.longBreakMinutes)),
-      longBreakEvery: Math.max(1, Number(payload.longBreakEvery ?? DEFAULT_SETTINGS.longBreakEvery)),
+      focusMinutes: Math.min(120, Math.max(1, Number(payload.focusMinutes ?? DEFAULT_SETTINGS.focusMinutes))),
+      shortBreakMinutes: Math.min(60, Math.max(1, Number(payload.shortBreakMinutes ?? DEFAULT_SETTINGS.shortBreakMinutes))),
+      longBreakMinutes: Math.min(60, Math.max(1, Number(payload.longBreakMinutes ?? DEFAULT_SETTINGS.longBreakMinutes))),
+      longBreakEvery: Math.min(12, Math.max(1, Number(payload.longBreakEvery ?? DEFAULT_SETTINGS.longBreakEvery))),
       ritualEnabled: Boolean(payload.ritualEnabled ?? DEFAULT_SETTINGS.ritualEnabled),
       animationsEnabled: Boolean(payload.animationsEnabled ?? DEFAULT_SETTINGS.animationsEnabled),
       focusAccent: payload.focusAccent === "ocean" ? "ocean" : "amber",
