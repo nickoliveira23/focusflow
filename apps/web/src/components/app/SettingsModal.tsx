@@ -45,7 +45,7 @@ export function SettingsModal({
               onChange={(event) =>
                 onSettingsChange({
                   ...settings,
-                  focusMinutes: Number(event.target.value)
+                  focusMinutes: Math.min(120, Math.max(1, Number(event.target.value) || 1))
                 })
               }
             />
@@ -60,7 +60,7 @@ export function SettingsModal({
               onChange={(event) =>
                 onSettingsChange({
                   ...settings,
-                  shortBreakMinutes: Number(event.target.value)
+                  shortBreakMinutes: Math.min(60, Math.max(1, Number(event.target.value) || 1))
                 })
               }
             />
@@ -75,7 +75,7 @@ export function SettingsModal({
               onChange={(event) =>
                 onSettingsChange({
                   ...settings,
-                  longBreakMinutes: Number(event.target.value)
+                  longBreakMinutes: Math.min(60, Math.max(1, Number(event.target.value) || 1))
                 })
               }
             />
@@ -90,7 +90,7 @@ export function SettingsModal({
               onChange={(event) =>
                 onSettingsChange({
                   ...settings,
-                  longBreakEvery: Number(event.target.value)
+                  longBreakEvery: Math.min(12, Math.max(1, Number(event.target.value) || 1))
                 })
               }
             />
