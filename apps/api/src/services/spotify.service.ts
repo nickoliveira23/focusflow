@@ -45,7 +45,8 @@ export class SpotifyService {
       scope: SPOTIFY_SCOPES,
       state,
       code_challenge_method: "S256",
-      code_challenge: codeChallenge
+      code_challenge: codeChallenge,
+      show_dialog: "true"
     });
 
     const tokens = await this.db.getTokens(userId);
