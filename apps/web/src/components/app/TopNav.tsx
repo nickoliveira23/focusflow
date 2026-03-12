@@ -54,7 +54,7 @@ export function TopNav({
           <img src={brandLogo} alt="" className="brand-logo-image" />
         </div>
         <div>
-          <p className="brand-name">Pomodoro Flow</p>
+          <p className="brand-name">Focus Flow</p>
         </div>
       </div>
       <div className="top-actions">
