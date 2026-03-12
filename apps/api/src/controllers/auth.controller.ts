@@ -20,8 +20,11 @@ export class AuthController {
     return this.authService.handleGoogleCallback(request, reply);
   }
 
-  logout(request: FastifyRequest, reply: FastifyReply) {
-    this.spotifyService.disconnect();
+  async logout(request: FastifyRequest, reply: FastifyReply) {
+    const user = await this.authService.getAuthUserFromRequest(request);
+    if (user) {
+      await this.spotifyService.disconnect(user.id);
+    }
     return this.authService.logout(request, reply);
   }
 

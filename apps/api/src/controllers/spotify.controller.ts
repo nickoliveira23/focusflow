@@ -1,30 +1,30 @@
-﻿import type { FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyReply, FastifyRequest } from "fastify";
 import { SpotifyService } from "../services/spotify.service.js";
 
 export class SpotifyController {
   constructor(private readonly spotifyService: SpotifyService) {}
 
-  getStatus() {
-    return this.spotifyService.getStatus();
+  getStatus(userId: string) {
+    return this.spotifyService.getStatus(userId);
   }
 
-  startAuth() {
-    return this.spotifyService.startAuth();
+  startAuth(userId: string) {
+    return this.spotifyService.startAuth(userId);
   }
 
   handleCallback(request: FastifyRequest, reply: FastifyReply) {
     return this.spotifyService.handleCallback(request, reply);
   }
 
-  disconnect() {
-    return this.spotifyService.disconnect();
+  disconnect(userId: string) {
+    return this.spotifyService.disconnect(userId);
   }
 
-  getNowPlaying() {
-    return this.spotifyService.getNowPlaying();
+  getNowPlaying(userId: string) {
+    return this.spotifyService.getNowPlaying(userId);
   }
 
-  getProfile() {
-    return this.spotifyService.getProfile();
+  getProfile(userId: string) {
+    return this.spotifyService.getProfile(userId);
   }
 }

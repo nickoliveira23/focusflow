@@ -3,6 +3,7 @@ import type { AuthUser, FocusSessionRecord, TimerSettings } from "./models/domai
 import { createSettingsRepository } from "./repositories/settings.repository.js";
 import { createSessionsRepository } from "./repositories/sessions.repository.js";
 import { createUsersRepository } from "./repositories/users.repository.js";
+import { createSpotifyRepository } from "./repositories/spotify.repository.js";
 
 export type { AuthUser, FocusSessionRecord, TimerSettings };
 
@@ -41,16 +42,25 @@ export async function createDb(databaseUrl: string) {
       expires_at_iso TEXT NOT NULL,
       created_at_iso TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS spotify_tokens (
+      user_id TEXT PRIMARY KEY,
+      access_token TEXT NOT NULL,
+      refresh_token TEXT NOT NULL,
+      expires_at_ms BIGINT NOT NULL
+    );
   `);
 
   const settingsRepository = createSettingsRepository(pool);
   const sessionsRepository = createSessionsRepository(pool);
   const usersRepository = createUsersRepository(pool);
+  const spotifyRepository = createSpotifyRepository(pool);
 
   return {
     ...settingsRepository,
     ...sessionsRepository,
     ...usersRepository,
+    ...spotifyRepository,
     async close() {
       await pool.end();
     }

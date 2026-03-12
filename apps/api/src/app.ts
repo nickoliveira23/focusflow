@@ -33,7 +33,7 @@ export async function buildApp() {
 
   const authService = new AuthService(db, env, app.log);
   const dataService = new DataService(db);
-  const spotifyService = new SpotifyService(env, app.log);
+  const spotifyService = new SpotifyService(env, db, app.log);
 
   const healthController = new HealthController();
   const dataController = new DataController(authService, dataService);

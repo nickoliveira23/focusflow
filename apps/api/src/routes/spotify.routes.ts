@@ -2,8 +2,9 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { SpotifyController } from "../controllers/spotify.controller.js";
 import { AuthService } from "../services/auth.service.js";
 
-async function isAuthenticated(authService: AuthService, request: FastifyRequest) {
-  return Boolean(await authService.getAuthUserFromRequest(request));
+async function resolveAuthUserId(authService: AuthService, request: FastifyRequest): Promise<string | null> {
+  const user = await authService.getAuthUserFromRequest(request);
+  return user?.id ?? null;
 }
 
 export async function registerSpotifyRoutes(
@@ -12,39 +13,34 @@ export async function registerSpotifyRoutes(
   authService: AuthService
 ) {
   app.get("/api/spotify/status", async (request, reply) => {
-    if (!await isAuthenticated(authService, request)) {
-      return reply.code(401).send({ connected: false, authRequired: true });
-    }
-    return controller.getStatus();
+    const userId = await resolveAuthUserId(authService, request);
+    if (!userId) return reply.code(401).send({ connected: false, authRequired: true });
+    return controller.getStatus(userId);
   });
 
   app.post("/api/auth/spotify/start", async (request, reply) => {
-    if (!await isAuthenticated(authService, request)) {
-      return reply.code(401).send({ error: "AUTH_REQUIRED" });
-    }
-    return controller.startAuth();
+    const userId = await resolveAuthUserId(authService, request);
+    if (!userId) return reply.code(401).send({ error: "AUTH_REQUIRED" });
+    return controller.startAuth(userId);
   });
 
   app.get("/api/auth/spotify/callback", async (request, reply) => controller.handleCallback(request, reply));
 
   app.post("/api/auth/spotify/disconnect", async (request, reply) => {
-    if (!await isAuthenticated(authService, request)) {
-      return reply.code(401).send({ error: "AUTH_REQUIRED" });
-    }
-    return controller.disconnect();
+    const userId = await resolveAuthUserId(authService, request);
+    if (!userId) return reply.code(401).send({ error: "AUTH_REQUIRED" });
+    return controller.disconnect(userId);
   });
 
   app.get("/api/spotify/now-playing", async (request, reply) => {
-    if (!await isAuthenticated(authService, request)) {
-      return reply.code(401).send({ connected: false, playing: false, authRequired: true });
-    }
-    return controller.getNowPlaying();
+    const userId = await resolveAuthUserId(authService, request);
+    if (!userId) return reply.code(401).send({ connected: false, playing: false, authRequired: true });
+    return controller.getNowPlaying(userId);
   });
 
   app.get("/api/spotify/profile", async (request, reply) => {
-    if (!await isAuthenticated(authService, request)) {
-      return reply.code(401).send({ connected: false, authRequired: true });
-    }
-    return controller.getProfile();
+    const userId = await resolveAuthUserId(authService, request);
+    if (!userId) return reply.code(401).send({ connected: false, authRequired: true });
+    return controller.getProfile(userId);
   });
 }

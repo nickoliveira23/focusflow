@@ -1,35 +1,31 @@
-﻿import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import type { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
 import type { AppEnv } from "../config/env.js";
+import type { ReturnTypeCreateDb } from "../models/db-types.js";
+import type { SpotifyTokenState } from "../repositories/spotify.repository.js";
 import { SPOTIFY_SCOPES } from "../config/constants.js";
 
-interface SpotifyTokenState {
-  accessToken: string;
-  refreshToken: string;
-  expiresAtMs: number;
-}
-
 export class SpotifyService {
-  private spotifyTokenState: SpotifyTokenState | null = null;
-  private oauthState = "";
-  private oauthCodeVerifier = "";
-  private spotifyMockConnected = false;
+  private oauthStates = new Map<string, { codeVerifier: string; userId: string }>();
+  private spotifyMockConnected = new Set<string>();
 
   constructor(
     private readonly env: AppEnv,
+    private readonly db: ReturnTypeCreateDb,
     private readonly logger: FastifyBaseLogger
   ) {}
 
-  getStatus() {
-    return {
-      connected: this.env.spotifyMock ? this.spotifyMockConnected : this.spotifyTokenState !== null,
-      mock: this.env.spotifyMock
-    };
+  async getStatus(userId: string) {
+    if (this.env.spotifyMock) {
+      return { connected: this.spotifyMockConnected.has(userId), mock: true };
+    }
+    const tokens = await this.db.getTokens(userId);
+    return { connected: tokens !== null, mock: false };
   }
 
-  async startAuth() {
+  async startAuth(userId: string) {
     if (this.env.spotifyMock) {
-      this.spotifyMockConnected = true;
+      this.spotifyMockConnected.add(userId);
       return {
         connected: true,
         authUrl: `${this.env.frontendUrl}/?spotify=connected&mock=1`
@@ -40,8 +36,7 @@ export class SpotifyService {
 
     const state = randomBytes(16).toString("hex");
     const { codeVerifier, codeChallenge } = this.createPkcePair();
-    this.oauthState = state;
-    this.oauthCodeVerifier = codeVerifier;
+    this.oauthStates.set(state, { codeVerifier, userId });
 
     const params = new URLSearchParams({
       client_id: this.env.spotifyClientId,
@@ -53,15 +48,15 @@ export class SpotifyService {
       code_challenge: codeChallenge
     });
 
+    const tokens = await this.db.getTokens(userId);
     return {
-      connected: this.spotifyTokenState !== null,
+      connected: tokens !== null,
       authUrl: `https://accounts.spotify.com/authorize?${params.toString()}`
     };
   }
 
   async handleCallback(request: FastifyRequest, reply: FastifyReply) {
     if (this.env.spotifyMock) {
-      this.spotifyMockConnected = true;
       return reply.redirect(`${this.env.frontendUrl}/?spotify=connected&mock=1`);
     }
 
@@ -71,7 +66,9 @@ export class SpotifyService {
     if (query.error) {
       return reply.redirect(`${this.env.frontendUrl}/?spotify=error`);
     }
-    if (!query.code || !query.state || query.state !== this.oauthState) {
+
+    const pending = query.state ? this.oauthStates.get(query.state) : undefined;
+    if (!query.code || !query.state || !pending) {
       return reply.redirect(`${this.env.frontendUrl}/?spotify=invalid_state`);
     }
 
@@ -80,7 +77,7 @@ export class SpotifyService {
       grant_type: "authorization_code",
       code: query.code,
       redirect_uri: this.env.spotifyRedirectUri,
-      code_verifier: this.oauthCodeVerifier
+      code_verifier: pending.codeVerifier
     });
 
     const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
@@ -103,51 +100,44 @@ export class SpotifyService {
       expires_in: number;
     };
 
-    this.spotifyTokenState = {
+    await this.db.upsertTokens(pending.userId, {
       accessToken: tokenPayload.access_token,
       refreshToken: tokenPayload.refresh_token,
       expiresAtMs: Date.now() + tokenPayload.expires_in * 1000
-    };
-    this.oauthState = "";
-    this.oauthCodeVerifier = "";
+    });
 
+    this.oauthStates.delete(query.state);
     return reply.redirect(`${this.env.frontendUrl}/?spotify=connected`);
   }
 
-  disconnect() {
+  async disconnect(userId: string) {
     if (this.env.spotifyMock) {
-      this.spotifyMockConnected = false;
+      this.spotifyMockConnected.delete(userId);
       return { connected: false };
     }
 
-    this.spotifyTokenState = null;
+    await this.db.deleteTokens(userId);
     return { connected: false };
   }
 
-  async getNowPlaying() {
+  async getNowPlaying(userId: string) {
     if (this.env.spotifyMock) {
-      if (!this.spotifyMockConnected) {
+      if (!this.spotifyMockConnected.has(userId)) {
         return { connected: false, playing: false };
       }
       return {
         connected: true,
         playing: true,
-        track: {
-          title: "Mock Focus Track",
-          artist: "Mock Artist"
-        }
+        track: { title: "Mock Focus Track", artist: "Mock Artist" }
       };
     }
 
-    const accessToken = await this.getValidAccessToken();
+    const accessToken = await this.getValidAccessToken(userId);
     if (!accessToken) {
       return { connected: false, playing: false };
     }
 
-    const spotifyResponse = await this.fetchSpotifyWithRefresh(
-      "https://api.spotify.com/v1/me/player/currently-playing",
-      accessToken
-    );
+    const spotifyResponse = await this.fetchSpotifyWithRefresh(userId, "https://api.spotify.com/v1/me/player/currently-playing", accessToken);
 
     if (spotifyResponse.status === 204) {
       return { connected: true, playing: false };
@@ -159,49 +149,33 @@ export class SpotifyService {
 
     const payload = (await spotifyResponse.json()) as {
       is_playing: boolean;
-      item?: {
-        name?: string;
-        artists?: Array<{ name?: string }>;
-      };
+      item?: { name?: string; artists?: Array<{ name?: string }> };
     };
 
     const trackTitle = payload.item?.name ?? "";
-    const artistName = payload.item?.artists?.map((artist) => artist.name).filter(Boolean).join(", ");
+    const artistName = payload.item?.artists?.map((a) => a.name).filter(Boolean).join(", ");
 
     return {
       connected: true,
       playing: Boolean(payload.is_playing),
-      track: trackTitle
-        ? {
-            title: trackTitle,
-            artist: artistName || "Unknown artist"
-          }
-        : undefined
+      track: trackTitle ? { title: trackTitle, artist: artistName || "Unknown artist" } : undefined
     };
   }
 
-  async getProfile() {
+  async getProfile(userId: string) {
     if (this.env.spotifyMock) {
-      if (!this.spotifyMockConnected) {
+      if (!this.spotifyMockConnected.has(userId)) {
         return { connected: false };
       }
-      return {
-        connected: true,
-        profile: {
-          displayName: "Mock Listener"
-        }
-      };
+      return { connected: true, profile: { displayName: "Mock Listener" } };
     }
 
-    const accessToken = await this.getValidAccessToken();
+    const accessToken = await this.getValidAccessToken(userId);
     if (!accessToken) {
       return { connected: false };
     }
 
-    const spotifyResponse = await this.fetchSpotifyWithRefresh(
-      "https://api.spotify.com/v1/me",
-      accessToken
-    );
+    const spotifyResponse = await this.fetchSpotifyWithRefresh(userId, "https://api.spotify.com/v1/me", accessToken);
 
     if (!spotifyResponse.ok) {
       this.logger.error({ status: spotifyResponse.status }, "Spotify profile request failed");
@@ -228,14 +202,15 @@ export class SpotifyService {
     return { codeVerifier, codeChallenge };
   }
 
-  private async refreshSpotifyAccessToken() {
-    if (!this.spotifyTokenState?.refreshToken) {
+  private async refreshSpotifyAccessToken(userId: string): Promise<SpotifyTokenState> {
+    const tokens = await this.db.getTokens(userId);
+    if (!tokens?.refreshToken) {
       throw new Error("No refresh token available.");
     }
 
     const body = new URLSearchParams({
       grant_type: "refresh_token",
-      refresh_token: this.spotifyTokenState.refreshToken
+      refresh_token: tokens.refreshToken
     });
 
     const basicAuth = Buffer.from(`${this.env.spotifyClientId}:${this.env.spotifyClientSecret}`).toString("base64");
@@ -258,36 +233,36 @@ export class SpotifyService {
       refresh_token?: string;
     };
 
-    this.spotifyTokenState = {
+    const updated: SpotifyTokenState = {
       accessToken: payload.access_token,
-      refreshToken: payload.refresh_token ?? this.spotifyTokenState.refreshToken,
+      refreshToken: payload.refresh_token ?? tokens.refreshToken,
       expiresAtMs: Date.now() + payload.expires_in * 1000
     };
+
+    await this.db.upsertTokens(userId, updated);
+    return updated;
   }
 
-  private async getValidAccessToken() {
-    if (!this.spotifyTokenState) {
-      return null;
-    }
-    const expiringSoon = this.spotifyTokenState.expiresAtMs - Date.now() < 30_000;
+  private async getValidAccessToken(userId: string): Promise<string | null> {
+    const tokens = await this.db.getTokens(userId);
+    if (!tokens) return null;
+
+    const expiringSoon = tokens.expiresAtMs - Date.now() < 30_000;
     if (expiringSoon) {
-      await this.refreshSpotifyAccessToken();
+      const refreshed = await this.refreshSpotifyAccessToken(userId);
+      return refreshed.accessToken;
     }
-    return this.spotifyTokenState.accessToken;
+    return tokens.accessToken;
   }
 
-  private async fetchSpotifyWithRefresh(url: string, accessToken: string) {
+  private async fetchSpotifyWithRefresh(userId: string, url: string, accessToken: string) {
     const makeRequest = (token: string) =>
-      fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      fetch(url, { headers: { Authorization: `Bearer ${token}` } });
 
     let spotifyResponse = await makeRequest(accessToken);
-    if (spotifyResponse.status === 401 && this.spotifyTokenState?.refreshToken) {
-      await this.refreshSpotifyAccessToken();
-      spotifyResponse = await makeRequest(this.spotifyTokenState.accessToken);
+    if (spotifyResponse.status === 401) {
+      const refreshed = await this.refreshSpotifyAccessToken(userId);
+      spotifyResponse = await makeRequest(refreshed.accessToken);
     }
     return spotifyResponse;
   }
