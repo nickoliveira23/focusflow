@@ -235,6 +235,12 @@ body {
   box-shadow: 0 0 10px rgba(30, 215, 96, 0.65);
 }
 
+.spotify-footer-logo {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .spotify-footer-track,
 .spotify-footer-status {
   margin: 5px 0 0;
@@ -1012,48 +1018,14 @@ body {
   padding: clamp(8px, 2vw, 20px);
 }
 
-.immersive-canvas-spotify-hud {
+.immersive-canvas-spotify-footer {
   position: absolute;
   bottom: clamp(16px, 3vh, 32px);
   left: clamp(16px, 3vw, 32px);
-  display: flex;
-  align-items: center;
-  gap: clamp(8px, 1.2vw, 12px);
   max-width: min(50vw, 420px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 999px;
-  background: rgba(10, 10, 10, 0.7);
-  padding: clamp(8px, 1vw, 10px) clamp(12px, 1.8vw, 18px);
+  margin-top: 0;
 }
 
-.immersive-canvas-spotify-dot {
-  width: clamp(8px, 0.8vw, 10px);
-  height: clamp(8px, 0.8vw, 10px);
-  border-radius: 999px;
-  background: #8c8c8c;
-  flex-shrink: 0;
-}
-
-.immersive-canvas-spotify-dot.is-connected {
-  background: #1ed760;
-  box-shadow: 0 0 12px rgba(30, 215, 96, 0.72);
-}
-
-.immersive-canvas-spotify-dot.is-offline {
-  background: rgba(162, 162, 162, 0.78);
-}
-
-.immersive-canvas-spotify-text {
-  margin: 0;
-  min-width: 0;
-  color: rgba(242, 242, 242, 0.94);
-  font-size: clamp(0.86rem, 1.2vw, 1.05rem);
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-family: "IBM Plex Mono", monospace;
-}
 
 .immersive-canvas-timer {
   font-size: clamp(4.8rem, 18vw, 14rem);
