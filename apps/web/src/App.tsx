@@ -7,6 +7,7 @@ import { AccountModal } from "@/components/app/AccountModal";
 import { LoginModal } from "@/components/app/LoginModal";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { useImmersiveMode } from "@/hooks/useImmersiveMode";
+import { useKeepAlive } from "@/hooks/useKeepAlive";
 import { useTimerEngine } from "@/hooks/useTimerEngine";
 import { useSyncQueue } from "@/hooks/useSyncQueue";
 import {
@@ -63,7 +64,9 @@ export function App() {
     }
   };
 
-  const { authUser, setAuthUser, authChecked } = useAuthUser(apiFetch);
+  useKeepAlive(`${apiBaseUrl}/health`);
+
+  const { authUser, setAuthUser, authChecked, authError } = useAuthUser(apiFetch);
 
   const {
     syncQueue,
@@ -97,6 +100,7 @@ export function App() {
     settings,
     authChecked,
     authUserId: authUser?.id,
+    authError,
     immersiveLocked: isImmersiveLocked,
     setImmersiveLocked: setIsImmersiveLocked,
     onTrackEvent: trackEvent,
@@ -209,6 +213,11 @@ export function App() {
       setGuestHydrated(false);
       return;
     }
+    // Don't hydrate as guest when auth failed due to network error —
+    // this would overwrite the user's settings/timer with guest defaults.
+    if (authError) {
+      return;
+    }
     setGuestHydrated(false);
     try {
       const rawSettings = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -233,7 +242,7 @@ export function App() {
     } finally {
       setGuestHydrated(true);
     }
-  }, [authUser?.id]);
+  }, [authUser?.id, authError]);
 
   useEffect(() => {
     if (authUser || !guestHydrated) {

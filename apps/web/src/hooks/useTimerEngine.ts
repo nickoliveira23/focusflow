@@ -6,6 +6,7 @@ interface UseTimerEngineInput {
   settings: TimerSettings;
   authChecked: boolean;
   authUserId: string | undefined;
+  authError: boolean;
   immersiveLocked: boolean;
   setImmersiveLocked: (locked: boolean) => void;
   onTrackEvent: (name: string, details?: Record<string, string | number | boolean>) => void;
@@ -43,6 +44,7 @@ export function useTimerEngine({
   settings,
   authChecked,
   authUserId,
+  authError,
   immersiveLocked,
   setImmersiveLocked,
   onTrackEvent,
@@ -75,6 +77,15 @@ export function useTimerEngine({
 
   useEffect(() => {
     if (!authChecked) {
+      return;
+    }
+
+    // When auth failed due to network error, skip hydration entirely so the
+    // timer keeps running with its current state instead of resetting.
+    if (authError && !authUserId) {
+      if (!timerHydrated) {
+        setTimerHydrated(true);
+      }
       return;
     }
 
@@ -125,7 +136,7 @@ export function useTimerEngine({
     } finally {
       setTimerHydrated(true);
     }
-  }, [authChecked, authUserId, setImmersiveLocked]);
+  }, [authChecked, authError, authUserId, setImmersiveLocked]);
 
   useEffect(() => {
     if (!authChecked || !timerHydrated) {
