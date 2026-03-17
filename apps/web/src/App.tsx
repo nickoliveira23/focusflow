@@ -497,6 +497,14 @@ export function App() {
     };
   }, [focusSessions]);
 
+  useEffect(() => {
+    if (status === "running" || status === "paused") {
+      document.title = `Focus Flow — ${timeLabel}`;
+    } else {
+      document.title = "Focus Flow";
+    }
+  }, [status, timeLabel]);
+
   const accountViewTitle =
     accountView === "profile"
       ? "Profile"
