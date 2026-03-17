@@ -193,6 +193,18 @@ export function useTimerEngine({
           return;
         }
 
+        if (mode === "focus") {
+          const nextCompleted = completedFocusSessions + 1;
+          const session: FocusSessionRecord = {
+            id: crypto.randomUUID(),
+            completedAtIso: new Date().toISOString(),
+            durationSeconds: settings.focusMinutes * 60,
+            status: "completed"
+          };
+          onFocusSessionCompleted(session);
+          onTrackEvent("timer_completed", { mode: "focus", duration_seconds: session.durationSeconds });
+          setCompletedFocusSessions(nextCompleted);
+        }
         setStatus("completed");
         setEndsAtMs(null);
       }
