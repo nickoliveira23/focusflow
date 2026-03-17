@@ -125,7 +125,7 @@ export function SettingsModal({
                 })
               }
             />
-            Enable start ritual
+            Start ritual
           </label>
           <label className="checkbox-label">
             <Switch
@@ -137,7 +137,7 @@ export function SettingsModal({
                 })
               }
             />
-            Enable transitions
+            Transitions
           </label>
           <label className="checkbox-label">
             <Switch
@@ -149,7 +149,7 @@ export function SettingsModal({
                 })
               }
             />
-            Immersive focus mode
+            Immersive mode
           </label>
           <label className="checkbox-label">
             <Switch
@@ -161,7 +161,7 @@ export function SettingsModal({
                 })
               }
             />
-            Try fullscreen on focus
+            Fullscreen on focus
           </label>
           <label className="checkbox-label">
             <Switch
@@ -173,10 +173,10 @@ export function SettingsModal({
                 })
               }
             />
-            Full-canvas timer only
+            Full-canvas timer
           </label>
           <label>
-            Focus darkness ({settings.immersiveFocusDarkness}%)
+            Darkness ({settings.immersiveFocusDarkness}%)
             <input
               type="range"
               min={20}
@@ -196,10 +196,10 @@ export function SettingsModal({
         <div className="modal-footer">
           {feedbackMessage ? <p className="settings-feedback">{feedbackMessage}</p> : null}
           <Button type="button" variant="outline" onClick={onResetDefaults}>
-            Default settings
+            Reset
           </Button>
-          <Button type="button" variant="secondary" onClick={onSave}>
-            Save settings
+          <Button type="button" onClick={onSave}>
+            Save
           </Button>
         </div>
       </DialogContent>

@@ -251,17 +251,17 @@ export function TimerCard({
       <CardContent className="space-y-4">
         <p className="timer-label">
           {mode === "focus"
-            ? `Focus time (${settings.focusMinutes} min)`
+            ? `${settings.focusMinutes} min session`
             : mode === "short_break"
-              ? `Break time (${settings.shortBreakMinutes} min)`
-              : `Long break (${settings.longBreakMinutes} min)`}
+              ? `${settings.shortBreakMinutes} min break`
+              : `${settings.longBreakMinutes} min long break`}
         </p>
         <p className="timer-value" aria-live="polite">
           {timeLabel}
         </p>
 
         {!isImmersiveActive ? (
-          <p className="cycle-stats">Focus sessions completed: {completedFocusSessions}</p>
+          <p className="cycle-stats">{completedFocusSessions} sessions completed</p>
         ) : null}
 
         {!isImmersiveActive ? (
@@ -297,7 +297,7 @@ export function TimerCard({
         {!isImmersiveActive ? (
           <label className="auto-cycle-toggle">
             <Switch checked={autoCycle} onCheckedChange={onAutoCycleChange} />
-            Auto cycle (focus/break)
+            Auto cycle
           </label>
         ) : null}
 

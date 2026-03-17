@@ -1,10 +1,6 @@
 import React from "react";
 import { UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import appLogo from "@/assets/logo.svg";
-import appLogoOcean from "@/assets/logo-ocean.svg";
-import appLogoShortBreak from "@/assets/logo-short-break.svg";
-import appLogoLongBreak from "@/assets/logo-long-break.svg";
 import type { FocusAccent, SessionMode } from "@/app/types";
 import {
   DropdownMenu,
@@ -28,8 +24,6 @@ interface TopNavProps {
 
 export function TopNav({
   authUser,
-  focusAccent,
-  mode,
   onOpenInsights,
   onOpenSettings,
   onOpenAccount,
@@ -38,24 +32,10 @@ export function TopNav({
   onLogout,
   onOpenLoginModal
 }: TopNavProps) {
-  const brandLogo =
-    mode === "short_break"
-      ? appLogoShortBreak
-      : mode === "long_break"
-        ? appLogoLongBreak
-        : focusAccent === "ocean"
-          ? appLogoOcean
-          : appLogo;
-
   return (
     <header className="top-nav" aria-label="Main navigation">
       <div className="brand">
-        <div className="brand-logo" aria-hidden="true">
-          <img src={brandLogo} alt="" className="brand-logo-image" />
-        </div>
-        <div>
-          <p className="brand-name">Focus Flow</p>
-        </div>
+        <p className="brand-name">Focus Flow</p>
       </div>
       <div className="top-actions">
         <Button type="button" variant="outline" onClick={onOpenInsights}>
@@ -105,7 +85,7 @@ export function TopNav({
             aria-label="Open login modal"
           >
             <span className="account-avatar-fallback account-avatar-placeholder" aria-hidden="true">
-              <UserIcon size={18} />
+              <UserIcon size={16} />
             </span>
           </Button>
         )}
